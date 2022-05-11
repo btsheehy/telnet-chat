@@ -146,11 +146,6 @@ const optionsFlipped: { [key: number]: string } = Object.entries(
   telnetOptions
 ).reduce((acc, [key, value]) => ({ ...acc, [value]: key }), {})
 
-type ClientContext = {
-  channel?: Channel
-  viewingTemporaryInfo?: boolean
-}
-
 type UIContext =
   | {
       screen: 'channel'
@@ -181,7 +176,6 @@ export class Client {
   socket: Socket
   id: string
   name: string
-  clientContext: ClientContext
   uiContext: UIContext
   width: number
   height: number
@@ -191,12 +185,11 @@ export class Client {
     this.id = randomUUID()
     // this.socket.on('ready', this.clearScreen)
     this.socket.on('data', this.takeInput)
-    this.clientContext = { viewingTemporaryInfo: true }
     this.uiContext = { screen: 'home' }
     this.width = 200
     this.height = 80
     this.clearScreen()
-    this.sendData('Welcome to the chat! Please login with /login <username>')
+    this.navigate({ screen: 'home' })
     clientStore.eventEmitter.on('change', () => {
       console.log('clientStore changed')
       this.refresh()
@@ -235,6 +228,11 @@ export class Client {
     const oldUiContext = this.uiContext
     this.uiContext = uiContext
     if (uiContext.channel !== oldUiContext.channel) {
+      oldUiContext.channel?.eventEmitter.removeListener(
+        'new message',
+        this.refresh
+      )
+      this.uiContext.channel?.eventEmitter.on('new message', this.refresh)
       clientStore.eventEmitter.emit('channel membership changed')
       clientStore.eventEmitter.emit('change')
     }
@@ -322,9 +320,6 @@ export class Client {
       case 'users':
         this.navigate({ screen: 'usersList' })
         break
-      case 'members':
-        this.listMembers()
-        break
       default:
         this.sendData(`Unknown command: ${commandName}`)
         break
@@ -381,14 +376,6 @@ export class Client {
   takeInput = (data: any) => {
     const isTelnetCommand = data[0] === 255
     if (isTelnetCommand) return this.takeTelnetCommands(data)
-    // if (this.clientContext.viewingTemporaryInfo) {
-    //   this.restoreScreen()
-    //   this.restoreCursor()
-    //   return this.changeContext({
-    //     ...this.clientContext,
-    //     viewingTemporaryInfo: false,
-    //   })
-    // }
     const input = data.toString().trimEnd()
     if (!input) {
       this.moveCursorUp(1)
@@ -405,16 +392,15 @@ export class Client {
     console.log(input)
     const isCommand = input.startsWith('/')
     if (isCommand) return this.runCommand(input)
-    else if (this.clientContext.channel) {
+    else if (this.uiContext.channel) {
       this.moveCursorUp(1)
       this.clearLine()
-      this.clientContext.channel.addMessage(new Message(input, this))
+      this.uiContext.channel.addMessage(new Message(input, this))
     }
   }
   login = (username: string) => {
     this.name = username
     clientStore.eventEmitter.emit('change')
-    this.clearScreen()
     this.sendData(`Welcome to the chat, ${username}!`)
     this.sendData('Type "/help" for a list of commands')
     this.sendTelnetCommand('DO', 'OPT_WINDOW_SIZE')
@@ -434,11 +420,9 @@ export class Client {
     if (!channel) {
       const newChannel = new Channel(channelName, 'public')
       channelStore.add(newChannel)
-      this.changeContext({ channel: newChannel })
       this.navigate({ screen: 'channel', channel: newChannel })
       this.sendData(`Channel ${channelName} created.`)
     } else {
-      this.changeContext({ channel })
       this.navigate({ screen: 'channel', channel })
     }
     this.sendData(`You have joined ${channelName}.`)
@@ -447,51 +431,7 @@ export class Client {
   leave = () => {
     this.navigate({ screen: 'home' })
   }
-  changeContext = (context: ClientContext) => {
-    this.clientContext.channel?.eventEmitter.off(
-      'new message',
-      this.renderChannel
-    )
-    this.clientContext = context
-    context.channel?.eventEmitter.on('new message', this.renderChannel)
-    if (context.viewingTemporaryInfo) {
-      this.saveScreen()
-      this.saveCursor()
-      this.clearScreen()
-    }
-  }
-  renderChannel = () => {
-    if (this.clientContext.channel) {
-      this.clearScreen()
-      const content = renderChannel(
-        this.clientContext.channel,
-        channelStore,
-        clientStore,
-        this
-      )
-      console.log(content)
-      content.forEach((line) => this.sendData(line))
-    }
-  }
-  listChannels = () => {
-    this.changeContext({ viewingTemporaryInfo: true })
-    this.sendData('Available channels:')
-    if (channelStore.getAll().length === 0) {
-      return this.sendData(
-        'No channels available yet. Create the first one! Type "/join <channel name>"'
-      )
-    }
-    channelStore.getAll().forEach((channel) => {
-      this.sendData(channel.name)
-    })
-  }
-  listMembers = () => {
-    this.changeContext({ viewingTemporaryInfo: true })
-    this.sendData('Channel members:')
-    this.clientContext.channel?.clients.forEach((client) => {
-      this.sendData(client.name)
-    })
-  }
+
   debug = () => {
     console.log({
       channels: channelStore
