@@ -20,11 +20,19 @@ export class Channel {
     this.clients = []
     this.messages = []
     this.eventEmitter = new EventEmitter()
-    clientStore.eventEmitter.on('channel membership changed', () => {
-      this.clients = clientStore
-        .getAll()
-        .filter((client) => client.uiContext.channel?.id === this.id)
-    })
+    clientStore.eventEmitter.on(
+      'channel membership changed',
+      this.handleMembershipChange
+    )
+  }
+  handleMembershipChange = () => {
+    console.log('channel membership changed')
+    const clients = clientStore.getAll()
+    console.log({ clients })
+    console.log(clients.map((c) => c.uiContext.channel?.id))
+    this.clients = clientStore
+      .getAll()
+      .filter((client) => client.uiContext.channel?.id === this.id)
   }
   addMessage = (message: Message) => {
     this.messages.push(message)

@@ -189,12 +189,14 @@ export class Client {
   constructor(socket: Socket) {
     this.socket = socket
     this.id = randomUUID()
-    this.socket.on('ready', this.clearScreen)
+    // this.socket.on('ready', this.clearScreen)
     this.socket.on('data', this.takeInput)
     this.clientContext = { viewingTemporaryInfo: true }
     this.uiContext = { screen: 'home' }
     this.width = 200
     this.height = 80
+    this.clearScreen()
+    this.sendData('Welcome to the chat! Please login with /login <username>')
     clientStore.eventEmitter.on('change', () => {
       console.log('clientStore changed')
       this.refresh()
@@ -230,10 +232,12 @@ export class Client {
     this.height = height
   }
   navigate = (uiContext: UIContext) => {
-    if (uiContext.channel !== this.uiContext.channel) {
-      clientStore.eventEmitter.emit('channel membership changed')
-    }
+    const oldUiContext = this.uiContext
     this.uiContext = uiContext
+    if (uiContext.channel !== oldUiContext.channel) {
+      clientStore.eventEmitter.emit('channel membership changed')
+      clientStore.eventEmitter.emit('change')
+    }
     let newContent
     switch (uiContext.screen) {
       case 'channel':
@@ -264,7 +268,16 @@ export class Client {
     newContent.forEach((l) => this.sendData(l))
   }
   refresh = () => {
-    this.navigate(this.uiContext)
+    console.log('refresh')
+    if (this.uiContext.screen === 'channel') {
+      this.clearScreen()
+      renderChannel(
+        this.uiContext.channel,
+        channelStore,
+        clientStore,
+        this
+      ).forEach((l) => this.sendData(l))
+    }
   }
   sendData = (
     message: string,
@@ -296,6 +309,9 @@ export class Client {
         break
       case 'join':
         this.join(args[0])
+        break
+      case 'leave':
+        this.leave()
         break
       case 'channels':
         this.navigate({ screen: 'channelList' })
@@ -419,12 +435,17 @@ export class Client {
       const newChannel = new Channel(channelName, 'public')
       channelStore.add(newChannel)
       this.changeContext({ channel: newChannel })
+      this.navigate({ screen: 'channel', channel: newChannel })
       this.sendData(`Channel ${channelName} created.`)
     } else {
       this.changeContext({ channel })
+      this.navigate({ screen: 'channel', channel })
     }
     this.sendData(`You have joined ${channelName}.`)
-    this.renderChannel()
+    // this.renderChannel()
+  }
+  leave = () => {
+    this.navigate({ screen: 'home' })
   }
   changeContext = (context: ClientContext) => {
     this.clientContext.channel?.eventEmitter.off(
@@ -473,8 +494,13 @@ export class Client {
   }
   debug = () => {
     console.log({
-      channels: channelStore.getAll(),
-      clients: clientStore.getAll(),
+      channels: channelStore
+        .getAll()
+        .map((c) => ({ ...c, clients: c.clients.map((c) => c.name) })),
+      clients: clientStore.getAll().map((c) => ({
+        ...c,
+        uiContext: `${c.uiContext.screen}/${c.uiContext.channel?.name}`,
+      })),
     })
   }
 }

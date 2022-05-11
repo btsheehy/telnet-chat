@@ -69,8 +69,9 @@ export const renderChannel = (
   const mainAreaStart = 2
   const mainAreaEnd = canvas.height - 4
   for (let i = mainAreaStart; i < mainAreaEnd; i++) {
-    canvas.splitLineIntoColumns(i, [25, 3, canvas.width - 28])
+    canvas.splitLineIntoColumns(i, [25, 3, canvas.width - 56, 3, 25])
     canvas.writeCell(i, 1, '|')
+    canvas.writeCell(i, 3, '|')
   }
   canvas.writeCell(mainAreaStart, 0, 'Channels:')
   const channelsInMainArea = channelList.splice(
@@ -79,6 +80,14 @@ export const renderChannel = (
   )
   channelsInMainArea.forEach((channel, i) => {
     canvas.writeCell(mainAreaStart + i + 1, 0, channel)
+  })
+
+  canvas.writeCell(mainAreaStart, 4, 'Active Users Here:')
+  const activeUsersInMainArea = channel.clients
+    .map((c) => c.name)
+    .splice(0, mainAreaEnd - mainAreaStart - 1)
+  activeUsersInMainArea.forEach((client, i) => {
+    canvas.writeCell(mainAreaStart + i + 1, 4, client)
   })
 
   const messageLines = channel.messages
@@ -142,7 +151,7 @@ export const renderChannelList = (
     )
   }
   channels.forEach((c, i) => {
-    canvas.writeLine(i + 1, `#${c.name}`)
+    canvas.writeLine(i + 1, c.name)
   })
   return canvas.getDataLines()
 }
