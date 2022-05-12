@@ -1,5 +1,5 @@
-import { Channel } from './types/channel/Channel'
-import { Client } from './types/client/Client'
+import { Channel } from './types/Channel'
+import { Client } from './types/Client'
 import { KeyedStore } from './types/Store'
 
 const takeRight = (arr: Array<any>, qty = 1) => [...arr].splice(-qty, qty)
