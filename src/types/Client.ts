@@ -355,32 +355,36 @@ export class Client {
     this.socket.write(commandBuffer)
   }
   takeInput = (data: any) => {
-    const isTelnetCommand = data[0] === 255
-    if (isTelnetCommand) return this.takeTelnetCommands(data)
-    const input = data.toString().trimEnd()
-    this.logger.info('received input', { input })
-    if (!input) {
-      this.moveCursorUp(1)
-      this.clearLine()
-      return
-    }
-    if (
-      !this.name &&
-      !input.startsWith('/login ') &&
-      !input.startsWith('/help')
-    ) {
-      return this.sendData('Please login by typing "/login <username>"')
-    }
-    const isCommand = input.startsWith('/')
-    if (isCommand) return this.runCommand(input)
-    else if (this.uiContext.channel) {
-      this.moveCursorUp(1)
-      this.clearLine()
-      this.uiContext.channel.addMessage(new Message(input, this))
-      this.logger.info('client sent message', {
-        messageText: input,
-        channel: this.uiContext.channel.name,
-      })
+    try {
+      const isTelnetCommand = data[0] === 255
+      if (isTelnetCommand) return this.takeTelnetCommands(data)
+      const input = data.toString().trimEnd()
+      this.logger.info('received input', { input })
+      if (!input) {
+        this.moveCursorUp(1)
+        this.clearLine()
+        return
+      }
+      if (
+        !this.name &&
+        !input.startsWith('/login ') &&
+        !input.startsWith('/help')
+      ) {
+        return this.sendData('Please login by typing "/login <username>"')
+      }
+      const isCommand = input.startsWith('/')
+      if (isCommand) return this.runCommand(input)
+      else if (this.uiContext.channel) {
+        this.moveCursorUp(1)
+        this.clearLine()
+        this.uiContext.channel.addMessage(new Message(input, this))
+        this.logger.info('client sent message', {
+          messageText: input,
+          channel: this.uiContext.channel.name,
+        })
+      }
+    } catch (e) {
+      this.logger.error('error handling input', { error: e.message })
     }
   }
   login = (username: string) => {
