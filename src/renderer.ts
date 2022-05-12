@@ -174,7 +174,9 @@ export const renderHomePage = (client: Client) => {
   const welcomeAscii =
     "\r\n __    __     _                            _        \r\n/ / /\\ \\ \\___| | ___ ___  _ __ ___   ___  | |_ ___  \r\n\\ \\/  \\/ / _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ | __/ _ \\ \r\n \\  /\\  /  __/ | (_| (_) | | | | | |  __/ | || (_) |\r\n  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___|  \\__\\___/ \r\n                                                    \r\n _____     _            _       ___ _           _   \r\n/__   \\___| |_ __   ___| |_    / __\\ |__   __ _| |_ \r\n  / /\\/ _ \\ | '_ \\ / _ \\ __|  / /  | '_ \\ / _` | __|\r\n / / |  __/ | | | |  __/ |_  / /___| | | | (_| | |_ \r\n \\/   \\___|_|_| |_|\\___|\\__| \\____/|_| |_|\\__,_|\\__|\r\n                                                    "
   canvas.writeLine(0, welcomeAscii)
-  canvas.writeLine(7, 'Type "/login <username>" to log in')
+  if (!client.name) {
+    canvas.writeLine(7, 'Type "/login <username>" to log in')
+  }
   return canvas.getDataLines()
 }
 

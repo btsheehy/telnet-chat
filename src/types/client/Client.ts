@@ -266,16 +266,7 @@ export class Client {
     newContent.forEach((l) => this.sendData(l))
   }
   refresh = () => {
-    console.log('refresh')
-    if (this.uiContext.screen === 'channel') {
-      this.clearScreen()
-      renderChannel(
-        this.uiContext.channel,
-        channelStore,
-        clientStore,
-        this
-      ).forEach((l) => this.sendData(l))
-    }
+    this.navigate(this.uiContext)
   }
   sendData = (
     message: string,
