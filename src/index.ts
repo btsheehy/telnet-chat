@@ -7,6 +7,18 @@ import { Logger } from './logger'
 
 export const clientStore = new KeyedStore<Client>()
 export const channelStore = new KeyedStore<Channel>()
+const sampleChannels: string[] = [
+  'general',
+  'random',
+  'engineers',
+  'designers',
+  'dallas-office',
+  'lunch-plans',
+]
+sampleChannels.forEach((name: string) => {
+  channelStore.add(new Channel(name, 'public'))
+})
+
 const logger = new Logger(process.env.LOG_FILE_LOCATION, {
   application: 'telnet-chat',
   environment: process.env.ENVIRONMENT,
