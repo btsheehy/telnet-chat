@@ -13,7 +13,7 @@ export const renderChannel = (
   const canvas = new Canvas(client.height - 10, client.width - 10)
   const channels = channelStore.getAll()
   const channelList = channels.map((channel) => channel.name)
-  canvas.splitLineIntoColumns(0, [25, canvas.width - 25])
+  canvas.splitLineIntoColumns(0, [40, canvas.width - 40])
   canvas.writeCell(0, 0, `Logged in as: ${client.name}`)
   canvas.writeCell(0, 1, `Viewing channel: ${channel.name}`)
   canvas.writeLine(1, '-'.repeat(canvas.width))
