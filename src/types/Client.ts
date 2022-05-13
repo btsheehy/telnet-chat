@@ -2,7 +2,7 @@ import { Socket } from 'net'
 import { randomUUID } from 'crypto'
 import { Channel } from './Channel'
 import { Message } from './Message'
-import { Logger } from '../logger'
+import { Logger } from './Logger'
 import { channelStore, clientStore } from '../index'
 import {
   renderHelpPage,
@@ -197,6 +197,7 @@ export class Client {
     channelStore.eventEmitter.on('change', () => {
       this.refresh()
     })
+    this.sendTelnetCommand('DO', 'OPT_WINDOW_SIZE')
   }
   clearScreen = () => {
     this.socket.write('\x1b[2J\x1b[0;0H')
@@ -242,12 +243,7 @@ export class Client {
     let newContent
     switch (uiContext.screen) {
       case 'channel':
-        newContent = renderChannel(
-          this.uiContext.channel,
-          channelStore,
-          clientStore,
-          this
-        )
+        newContent = renderChannel(this.uiContext.channel, channelStore, this)
         break
       case 'help':
         newContent = renderHelpPage(this)
@@ -394,7 +390,6 @@ export class Client {
     clientStore.eventEmitter.emit('change')
     this.sendData(`Welcome to the chat, ${username}!`)
     this.sendData('Type "/help" for a list of commands')
-    this.sendTelnetCommand('DO', 'OPT_WINDOW_SIZE')
   }
   logout = () => {
     this.clearScreen()

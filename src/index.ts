@@ -3,7 +3,7 @@ import 'dotenv/config'
 import { Channel } from './types/Channel'
 import { KeyedStore } from './types/Store'
 import { Client } from './types/Client'
-import { Logger } from './logger'
+import { Logger } from './types/Logger'
 
 export const clientStore = new KeyedStore<Client>()
 export const channelStore = new KeyedStore<Channel>()
