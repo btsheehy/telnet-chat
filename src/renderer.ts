@@ -123,6 +123,7 @@ export const renderHelpPage = (client: Client) => {
     '  /login <username> - logs in as the given username',
     '  /logout - logs out',
     '  /join <channel name> - joins the channel with the given name. If the channel does not exist, it will be created',
+    '  /rename <new username> - changes your username to the given one',
     '  /leave - leaves the current channel',
     '  /channels - lists all channels',
     '  /users - lists all users',

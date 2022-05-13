@@ -19,7 +19,7 @@ sampleChannels.forEach((name: string) => {
   channelStore.add(new Channel(name, 'public'))
 })
 
-const logger = new Logger(process.env.LOG_FILE_LOCATION, {
+const logger = new Logger(process.env.LOG_FILE_LOCATION || './main.log', {
   application: 'telnet-chat',
   environment: process.env.ENVIRONMENT,
 })
