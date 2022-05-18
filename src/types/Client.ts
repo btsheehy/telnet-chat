@@ -185,6 +185,7 @@ export class Client {
     this.socket = socket
     this.id = randomUUID()
     this.socket.on('data', this.takeInput)
+    this.socket.on('close', this.onClose)
     this.uiContext = { screen: 'home' }
     this.width = 200
     this.height = 80
@@ -273,10 +274,21 @@ export class Client {
     backgroundColor?: BackgroundColor,
     style?: Style
   ) => {
-    const fg = foregroundColor ? foregroundColorMap[foregroundColor] + ';' : ''
-    const bg = backgroundColor ? backgroundColorMap[backgroundColor] + ';' : ''
-    const s = style ? styleMap[style] + ';' : ''
-    this.socket.write(`\x1b[${fg}${bg}${s}m${message}\x1b[0m\n`)
+    try {
+      const fg = foregroundColor
+        ? foregroundColorMap[foregroundColor] + ';'
+        : ''
+      const bg = backgroundColor
+        ? backgroundColorMap[backgroundColor] + ';'
+        : ''
+      const s = style ? styleMap[style] + ';' : ''
+      this.socket.write(`\x1b[${fg}${bg}${s}m${message}\x1b[0m\n`)
+    } catch (e) {
+      this.logger.error('error sending data to client', {
+        message: e.message,
+        error: e,
+      })
+    }
   }
   runCommand = (command: string) => {
     this.logger.info('user input command', { command })
@@ -384,6 +396,16 @@ export class Client {
     }
   }
   login = (username: string) => {
+    const takenUsernames = clientStore.getAll().map((c) => c.name)
+    const usernameTaken = takenUsernames.includes(username)
+    const userAlreadyLoggedIn = !!this.name
+    if (userAlreadyLoggedIn)
+      return this.sendData(
+        'You are already logged in. To change your name, type "/rename <new name>"'
+      )
+    if (usernameTaken) {
+      return this.sendData('Username already taken, please choose another')
+    }
     this.name = username
     this.logger.addToContext({ name: this.name })
     this.logger.info('logged in', {})
@@ -398,6 +420,13 @@ export class Client {
     this.logger.addToContext({ name: this.name })
     this.logger.info('logged out', { oldName })
     this.sendData('You have been logged out.')
+  }
+  onClose = (hadError: boolean) => {
+    this.logger.info('client closed connection', { hadError })
+    // this.logout()
+    clientStore.remove(this.id)
+    clientStore.eventEmitter.emit('channel membership changed')
+    this.socket.destroy()
   }
   rename = (newUsername: string) => {
     const oldName = this.name

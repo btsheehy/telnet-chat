@@ -114,7 +114,7 @@ export const renderUserList = (
   clientStore: KeyedStore<Client>
 ) => {
   const canvas = new Canvas(client.height - 10, client.width - 10)
-  const clients = clientStore.getAll()
+  const clients = clientStore.getAll().filter((c) => !!c.name)
   canvas.writeLine(0, 'Available users:')
   clients.forEach((c, i) => {
     canvas.writeLine(i + 1, c.name)
@@ -128,7 +128,7 @@ export const renderHomePage = (client: Client) => {
     "\r\n __    __     _                            _        \r\n/ / /\\ \\ \\___| | ___ ___  _ __ ___   ___  | |_ ___  \r\n\\ \\/  \\/ / _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ | __/ _ \\ \r\n \\  /\\  /  __/ | (_| (_) | | | | | |  __/ | || (_) |\r\n  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___|  \\__\\___/ \r\n                                                    \r\n _____     _            _       ___ _           _   \r\n/__   \\___| |_ __   ___| |_    / __\\ |__   __ _| |_ \r\n  / /\\/ _ \\ | '_ \\ / _ \\ __|  / /  | '_ \\ / _` | __|\r\n / / |  __/ | | | |  __/ |_  / /___| | | | (_| | |_ \r\n \\/   \\___|_|_| |_|\\___|\\__| \\____/|_| |_|\\__,_|\\__|\r\n                                                    "
   canvas.writeLine(0, welcomeAscii)
   if (!client.name) {
-    canvas.writeLine(7, 'Type "/login <username>" to log in')
+    canvas.writeLine(1, 'Type "/login <username>" to log in')
   }
   return canvas.getDataLines()
 }

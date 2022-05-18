@@ -31,4 +31,12 @@ export class KeyedStore<T extends KeyedStoreItem> {
     this.eventEmitter.emit('change')
     return this.get(item.id)
   }
+  remove = (id: string) => {
+    const item = this.state[id]
+    delete this.state[id]
+    delete this.nameToIdMap[item.name]
+    this.eventEmitter.emit('remove', item)
+    this.eventEmitter.emit('change')
+    return item
+  }
 }
